@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Analysis: Custom AI vs. Managed Services</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Calm & Assuring -->
+    <!-- Application Structure Plan: A single-page application with a sticky top navigation and smooth-scrolling sections is chosen for this report. This structure allows users to get a high-level overview from the navigation, while also enabling a linear, narrative-driven exploration of the content by simply scrolling. The flow is designed to be logical: start with the 'Executive Summary', deconstruct each architecture ('System Deconstruction'), visualize the trade-offs ('Comparative Analysis'), and conclude with actionable steps ('Strategic Roadmap'). This is more user-friendly than a dense document, guiding the user through a complex technical comparison in a digestible way. -->
+    <!-- Visualization & Content Choices: 
+        - Report Info: System Architectures (GraphRAG+Mem0 vs. Vertex AI) -> Goal: Organize & Compare -> Viz: Interactive HTML/CSS diagrams. Interaction: Clicking a component reveals its description. Justification: This makes the abstract architectures tangible and allows users to explore each component's role at their own pace. Method: Vanilla JS & Tailwind CSS.
+        - Report Info: Feature-by-feature comparison (Table 3.1) -> Goal: Compare -> Viz: Horizontal Bar Chart. Interaction: Tooltips on hover provide exact values. Justification: A chart is more visually engaging and quicker to interpret for comparing quantitative/qualitative ratings (e.g., 'Control' vs. 'Simplicity') than a text-based table. Library: Chart.js.
+        - Report Info: Strategic Recommendations -> Goal: Organize & Inform -> Viz: Accordion component. Interaction: Clicking a recommendation title expands to show the detailed solution. Justification: This presents the high-level strategies first without overwhelming the user, allowing them to dive into the details of the recommendations that interest them most. Method: Vanilla JS.
+        - Gemini API Integration: Strategy Explainer -> Goal: Simplify/Inform -> Viz: Button-triggered text generation. Interaction: User clicks a button for an AI-generated explanation of a strategic recommendation. Justification: Increases accessibility by providing simplified, benefit-oriented summaries of technical proposals. Library/Method: Gemini API.
+        - Gemini API Integration: Interactive Q&A -> Goal: Engage/Clarify -> Viz: Input field with a button. Interaction: User asks a question and receives an AI-generated answer grounded in the report's context. Justification: Allows for personalized exploration and clarification of the report's content, making it more interactive. Library/Method: Gemini API.
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        html { scroll-behavior: smooth; }
+        body { font-family: 'Inter', sans-serif; background-color: #FDFCFB; color: #333D4B; }
+        .nav-active { color: #3A7D7C; border-bottom-color: #3A7D7C; font-weight: 600; }
+        .nav-inactive { color: #5A6A7D; border-bottom-color: transparent; }
+        .accordion-content { max-height: 0; overflow: hidden; transition: max-height 0.3s ease-out; }
+        .flow-box { transition: all 0.2s ease-in-out; }
+        .flow-box-active {
+            box-shadow: 0 0 0 3px #6EB4A5, 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+            transform: scale(1.05);
+            border-color: #6EB4A5;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 400px;
+            max-height: 60vh;
+        }
+        .loader {
+            width: 20px;
+            height: 20px;
+            border: 2px solid #e5e7eb;
+            border-top: 2px solid #3A7D7C;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="min-h-screen">
+        <header class="sticky top-0 bg-white/90 backdrop-blur-lg z-50 border-b border-slate-200">
+            <nav class="container mx-auto px-4">
+                <ul class="flex items-center justify-center h-16 text-sm font-medium">
+                    <li class="mr-6 md:mr-8"><a href="#summary" class="nav-link border-b-2 nav-active py-1">Summary</a></li>
+                    <li class="mr-6 md:mr-8"><a href="#deconstruction" class="nav-link border-b-2 nav-inactive py-1">Deconstruction</a></li>
+                    <li class="mr-6 md:mr-8"><a href="#comparison" class="nav-link border-b-2 nav-inactive py-1">Comparison</a></li>
+                    <li><a href="#roadmap" class="nav-link border-b-2 nav-inactive py-1">Roadmap</a></li>
+                </ul>
+            </nav>
+        </header>
+
+        <main class="container mx-auto p-4 md:p-8">
+
+            <section id="summary" class="pt-16 -mt-16">
+                <div class="bg-white p-8 md:p-12 rounded-2xl shadow-lg my-12">
+                    <h1 class="text-3xl md:text-4xl font-bold text-center text-slate-900">Architectural Analysis: Custom AI vs. Managed Services</h1>
+                    <p class="text-lg text-slate-600 mt-4 text-center max-w-4xl mx-auto">A comparative study of a bespoke **GraphRAG + Mem0** system versus Google's **Vertex AI Memory Bank**, and a strategic roadmap for creating a state-of-the-art, enterprise-grade solution.</p>
+                    
+                    <div class="mt-8 text-slate-700 space-y-4">
+                        <p>This report presents a technical and strategic analysis of two paradigms for building stateful AI systems. The core finding is a fundamental trade-off: the **transparency, control, and powerful graph-based reasoning** of the custom GraphRAG + Mem0 stack versus the **operational simplicity and automated intelligence** of the managed Vertex AI Memory Bank.</p>
+                        <p class="font-semibold">The optimal path forward is not to replace the custom system, but to enhance it with principles learned from the managed service, focusing on automated memory curation and creating a dynamic, "living" knowledge graph.</p>
+                    </div>
+                </div>
+            </section>
+
+            <section id="deconstruction" class="pt-24 -mt-16">
+                <h2 class="text-3xl font-bold text-slate-900 mb-4 text-center">System Deconstruction</h2>
+                <p class="text-slate-600 mb-12 text-center max-w-3xl mx-auto">To understand the trade-offs, we must first deconstruct each architecture. The custom stack offers granular control over its distinct knowledge and memory components, while the managed service provides a unified, automated abstraction. Click on the components in each diagram to learn more.</p>
+
+                <div class="grid lg:grid-cols-2 gap-8">
+                    <div class="bg-white p-6 rounded-2xl shadow-lg">
+                        <h3 class="text-xl font-bold text-slate-800 mb-4 text-center">Architecture 1: GraphRAG + Mem0 (Custom Stack)</h3>
+                        <div id="custom-diagram" class="space-y-4">
+                            <div data-component="c-agent" class="flow-box text-center p-3 border rounded-lg cursor-pointer bg-white shadow-sm">🤖 AI Agent (Complex Logic)</div>
+                            <div class="text-center text-2xl font-light text-slate-400">↓</div>
+                            <div data-component="c-mcp" class="flow-box text-center p-3 border rounded-lg cursor-pointer bg-white shadow-sm">🔌 MCP Server (Tool Dispatcher)</div>
+                            <div class="text-center text-2xl font-light text-slate-400">↓</div>
+                            <div class="flex justify-around gap-2">
+                                <div data-component="c-graphrag" class="flow-box text-center p-3 border rounded-lg cursor-pointer bg-white shadow-sm w-1/2">🧠 GraphRAG (Static Knowledge)</div>
+                                <div data-component="c-mem0" class="flow-box text-center p-3 border rounded-lg cursor-pointer bg-white shadow-sm w-1/2">💬 Mem0 (Dynamic Memory)</div>
+                            </div>
+                        </div>
+                        <div id="custom-info" class="mt-4 p-4 bg-slate-50 border rounded-lg min-h-[100px] flex items-center justify-center">
+                           <p class="text-slate-500 text-sm text-center">Click a component to see its description.</p>
+                        </div>
+                    </div>
+
+                    <div class="bg-white p-6 rounded-2xl shadow-lg">
+                        <h3 class="text-xl font-bold text-slate-800 mb-4 text-center">Architecture 2: Vertex AI Memory Bank (Managed)</h3>
+                        <div id="managed-diagram" class="space-y-4">
+                            <div data-component="m-agent" class="flow-box text-center p-3 border rounded-lg cursor-pointer bg-white shadow-sm">🤖 AI Agent (Simplified Logic)</div>
+                            <div class="text-center text-2xl font-light text-slate-400">↓</div>
+                            <div data-component="m-adk" class="flow-box text-center p-3 border rounded-lg cursor-pointer bg-white shadow-sm">🛠️ Agent Dev Kit (ADK) with PreloadMemoryTool</div>
+                            <div class="text-center text-2xl font-light text-slate-400">↓</div>
+                            <div data-component="m-memorybank" class="flow-box text-center p-3 border-2 border-dashed border-teal-500 rounded-lg cursor-pointer bg-white shadow-sm">📦 Vertex AI Memory Bank (Unified & Automated)</div>
+                        </div>
+                         <div id="managed-info" class="mt-4 p-4 bg-slate-50 border rounded-lg min-h-[100px] flex items-center justify-center">
+                           <p class="text-slate-500 text-sm text-center">Click a component to see its description.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="comparison" class="pt-24 -mt-16">
+                <h2 class="text-3xl font-bold text-slate-900 mb-4 text-center">Comparative Analysis</h2>
+                <p class="text-slate-600 mb-12 text-center max-w-3xl mx-auto">The two architectures represent a classic "build vs. buy" trade-off. The custom stack provides maximum control and transparency, while the managed service offers simplicity and speed. This chart visualizes the key differences across critical dimensions.</p>
+                <div class="bg-white p-6 rounded-2xl shadow-lg">
+                    <div class="chart-container">
+                        <canvas id="comparison-chart"></canvas>
+                    </div>
+                </div>
+            </section>
+
+            <section id="roadmap" class="pt-24 -mt-16">
+                <h2 class="text-3xl font-bold text-slate-900 mb-4 text-center">Strategic Roadmap for Enhancement</h2>
+                <p class="text-slate-600 mb-12 text-center max-w-3xl mx-auto">The optimal path forward is to enhance the transparent and controllable GraphRAG + Mem0 system with the principles of automated intelligence from Vertex AI. The following recommendations outline a roadmap to create a state-of-the-art, enterprise-grade solution.</p>
+                
+                <div id="accordion" class="space-y-4 max-w-4xl mx-auto">
+                    <div class="border border-slate-200 rounded-lg bg-white">
+                        <button class="accordion-toggle flex justify-between items-center w-full p-5 font-semibold text-left text-slate-800">
+                            <span>1. Implement an "Agentic Memory Curator"</span>
+                            <span class="accordion-icon transition-transform transform text-xl font-light text-teal-600">+</span>
+                        </button>
+                        <div class="accordion-content px-5 pb-5">
+                            <p class="text-slate-600 text-sm">**Problem:** The Mem0 store can accumulate redundant or conflicting memories over time, requiring manual cleanup.<br>**Solution:** Create an asynchronous "curator" agent that periodically retrieves recent memories, uses an LLM to consolidate facts and resolve contradictions, and writes the cleaned memories back to the store. This automates memory hygiene and improves retrieval quality.</p>
+                            <div class="mt-4">
+                                <button data-strategy="curator" class="gemini-explain-btn bg-teal-50 text-teal-800 text-sm font-semibold py-1 px-3 rounded-full hover:bg-teal-100 transition-colors">✨ Explain the benefit</button>
+                                <div data-strategy-output="curator" class="strategy-output mt-3 text-sm p-3 bg-teal-50/50 rounded-md border border-teal-200 hidden"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="border border-slate-200 rounded-lg bg-white">
+                        <button class="accordion-toggle flex justify-between items-center w-full p-5 font-semibold text-left text-slate-800">
+                            <span>2. Create a "Living Knowledge Graph"</span>
+                            <span class="accordion-icon transition-transform transform text-xl font-light text-teal-600">+</span>
+                        </button>
+                        <div class="accordion-content px-5 pb-5">
+                            <p class="text-slate-600 text-sm">**Problem:** The GraphRAG knowledge base is static and cannot learn from new information in live conversations without a full re-index.<br>**Solution:** Enhance the curator agent to identify "high-value facts" from conversations. Trigger a lightweight process to extract entities and relationships from these new facts and inject them directly into the graph database, creating a dynamic knowledge base that learns over time.</p>
+                             <div class="mt-4">
+                                <button data-strategy="living-graph" class="gemini-explain-btn bg-teal-50 text-teal-800 text-sm font-semibold py-1 px-3 rounded-full hover:bg-teal-100 transition-colors">✨ Explain the benefit</button>
+                                <div data-strategy-output="living-graph" class="strategy-output mt-3 text-sm p-3 bg-teal-50/50 rounded-md border border-teal-200 hidden"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="border border-slate-200 rounded-lg bg-white">
+                        <button class="accordion-toggle flex justify-between items-center w-full p-5 font-semibold text-left text-slate-800">
+                            <span>3. Develop a Hybrid Retrieval Engine</span>
+                            <span class="accordion-icon transition-transform transform text-xl font-light text-teal-600">+</span>
+                        </button>
+                        <div class="accordion-content px-5 pb-5">
+                            <p class="text-slate-600 text-sm">**Problem:** The agent's logic must explicitly choose between querying knowledge (GraphRAG) or memory (Mem0), adding complexity.<br>**Solution:** Build a unified retrieval engine that sits between the agent and the data stores. This engine would use an LLM to analyze the user's query and intelligently route it to the best backend: Mem0 for personal context, GraphRAG's global search for themes, or GraphRAG's local search for complex relational questions.</p>
+                             <div class="mt-4">
+                                <button data-strategy="hybrid-retrieval" class="gemini-explain-btn bg-teal-50 text-teal-800 text-sm font-semibold py-1 px-3 rounded-full hover:bg-teal-100 transition-colors">✨ Explain the benefit</button>
+                                <div data-strategy-output="hybrid-retrieval" class="strategy-output mt-3 text-sm p-3 bg-teal-50/50 rounded-md border border-teal-200 hidden"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="border border-slate-200 rounded-lg bg-white">
+                        <button class="accordion-toggle flex justify-between items-center w-full p-5 font-semibold text-left text-slate-800">
+                            <span>4. Unify Behind a "Memory-as-a-Tool" Abstraction</span>
+                            <span class="accordion-icon transition-transform transform text-xl font-light text-teal-600">+</span>
+                        </button>
+                        <div class="accordion-content px-5 pb-5">
+                            <p class="text-slate-600 text-sm">**Problem:** The agent is still too coupled to the mechanics of memory retrieval.<br>**Solution:** Create a single, high-level tool, `get_context_for_query(query)`, that encapsulates the entire hybrid retrieval engine. The agent's only instruction would be to call this one tool for every query. This simplifies the agent's logic to its absolute minimum, mirroring the ease of use of managed services like Vertex AI's `PreloadMemoryTool`.</p>
+                             <div class="mt-4">
+                                <button data-strategy="abstraction" class="gemini-explain-btn bg-teal-50 text-teal-800 text-sm font-semibold py-1 px-3 rounded-full hover:bg-teal-100 transition-colors">✨ Explain the benefit</button>
+                                <div data-strategy-output="abstraction" class="strategy-output mt-3 text-sm p-3 bg-teal-50/50 rounded-md border border-teal-200 hidden"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="q-and-a" class="mt-12 bg-white p-8 rounded-2xl shadow-lg">
+                    <h3 class="text-2xl font-bold text-slate-900 mb-4 text-center">Interactive Q&A</h3>
+                    <p class="text-center text-slate-600 mb-6 max-w-2xl mx-auto">Have a question about the architectures or recommendations in this report? Ask the AI assistant below.</p>
+                    <div class="flex flex-col sm:flex-row items-center gap-2 max-w-2xl mx-auto">
+                        <input type="text" id="user-question-input" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent" placeholder="e.g., Which system is better for a startup?">
+                        <button id="ask-gemini-btn" class="bg-teal-600 hover:bg-teal-700 text-white font-bold py-2 px-4 rounded-lg transition-colors w-full sm:w-auto flex-shrink-0">✨ Ask AI</button>
+                    </div>
+                    <div id="gemini-answer" class="mt-4 p-4 bg-slate-50 text-slate-700 rounded-lg border border-slate-200 hidden"></div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Main navigation scroll behavior
+            const navLinks = document.querySelectorAll('.nav-link');
+            const sections = document.querySelectorAll('main > section');
+
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        navLinks.forEach(link => {
+                            link.classList.remove('nav-active');
+                            link.classList.add('nav-inactive');
+                            if (link.getAttribute('href').substring(1) === entry.target.id) {
+                                link.classList.add('nav-active');
+                                link.classList.remove('nav-inactive');
+                            }
+                        });
+                    }
+                });
+            }, { rootMargin: "-40% 0px -60% 0px" });
+
+            sections.forEach(section => {
+                observer.observe(section);
+            });
+            
+            // Diagram interaction logic
+            const customBoxes = document.querySelectorAll('#custom-diagram .flow-box');
+            const managedBoxes = document.querySelectorAll('#managed-diagram .flow-box');
+            const customInfo = document.getElementById('custom-info');
+            const managedInfo = document.getElementById('managed-info');
+
+            const descriptions = {
+                'c-agent': 'The core AI agent. In this model, it contains complex logic to decide which memory system (knowledge or conversational) to query.',
+                'c-mcp': 'Acts as a simple dispatcher, routing the agent\'s explicit tool calls to the correct backend provider.',
+                'c-graphrag': 'The static, deep knowledge base. Created via a heavy offline indexing process and optimized for complex, relational queries.',
+                'c-mem0': 'The dynamic, conversational memory store. Captures user preferences and interaction history in real-time.',
+                'm-agent': 'The core AI agent. Its logic is simplified because it offloads memory retrieval to the ADK.',
+                'm-adk': 'The Agent Development Kit provides tools like PreloadMemoryTool, which automatically fetches and injects relevant context into the agent\'s prompt.',
+                'm-memorybank': 'A unified, "black box" memory store. It uses an LLM to automatically extract, consolidate, and resolve conflicts in memory from conversations.'
+            };
+
+            function handleBoxClick(boxes, infoElement) {
+                boxes.forEach(box => {
+                    box.addEventListener('click', () => {
+                        const component = box.dataset.component;
+                        infoElement.innerHTML = `<p class="text-slate-600 text-sm">${descriptions[component]}</p>`;
+                        boxes.forEach(b => b.classList.remove('flow-box-active'));
+                        box.classList.add('flow-box-active');
+                    });
+                });
+            }
+            handleBoxClick(customBoxes, customInfo);
+            handleBoxClick(managedBoxes, managedInfo);
+            
+            // Accordion interaction
+            const accordions = document.querySelectorAll('.accordion-toggle');
+            accordions.forEach(accordion => {
+                accordion.addEventListener('click', () => {
+                    const content = accordion.nextElementSibling;
+                    const icon = accordion.querySelector('.accordion-icon');
+                    const isOpen = content.style.maxHeight && content.style.maxHeight !== '0px';
+
+                    if (isOpen) {
+                        content.style.maxHeight = '0px';
+                        icon.style.transform = 'rotate(0deg)';
+                        icon.textContent = '+';
+                    } else {
+                        content.style.maxHeight = content.scrollHeight + 'px';
+                        icon.style.transform = 'rotate(45deg)';
+                        icon.textContent = '×';
+                    }
+                });
+            });
+
+            // Gemini API Integration
+            const explainBtns = document.querySelectorAll('.gemini-explain-btn');
+            const askButton = document.getElementById('ask-gemini-btn');
+            const questionInput = document.getElementById('user-question-input');
+            const answerDiv = document.getElementById('gemini-answer');
+
+            const strategyPrompts = {
+                curator: "Explain the benefit of an 'Agentic Memory Curator' for an AI agent in one simple sentence. The problem is that the AI's memory gets messy over time.",
+                'living-graph': "Explain the benefit of a 'Living Knowledge Graph' for an AI agent in one simple sentence. The problem is that the AI's core knowledge is static and doesn't learn from new conversations.",
+                'hybrid-retrieval': "Explain the benefit of a 'Hybrid Retrieval Engine' for an AI agent in one simple sentence. The problem is that the agent has to explicitly choose between its knowledge and memory.",
+                abstraction: "Explain the benefit of a 'Memory-as-a-Tool Abstraction' for an AI agent in one simple sentence. The problem is that the agent's logic is still too complex."
+            };
+
+            async function callGemini(prompt) {
+                const apiKey = "";
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+                const payload = { contents: [{ parts: [{ text: prompt }] }] };
+
+                try {
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    if (!response.ok) throw new Error(`API call failed: ${response.status}`);
+                    const result = await response.json();
+                    if (result.candidates && result.candidates[0].content.parts[0].text) {
+                        return result.candidates[0].content.parts[0].text;
+                    }
+                    return "Sorry, I couldn't generate a response.";
+                } catch (error) {
+                    console.error("Gemini API Error:", error);
+                    return "An error occurred while contacting the AI.";
+                }
+            }
+
+            explainBtns.forEach(btn => {
+                btn.addEventListener('click', async (e) => {
+                    const strategy = e.target.dataset.strategy;
+                    const outputDiv = document.querySelector(`div[data-strategy-output="${strategy}"]`);
+                    const accordionContent = btn.closest('.accordion-content');
+
+                    outputDiv.innerHTML = '<div class="loader mx-auto"></div>';
+                    outputDiv.classList.remove('hidden');
+                    accordionContent.style.maxHeight = accordionContent.scrollHeight + outputDiv.scrollHeight + 'px';
+
+                    const prompt = strategyPrompts[strategy];
+                    const explanation = await callGemini(prompt);
+                    
+                    outputDiv.innerHTML = explanation.replace(/\n/g, '<br>');
+                    accordionContent.style.maxHeight = accordionContent.scrollHeight + 'px';
+                });
+            });
+
+            askButton.addEventListener('click', async () => {
+                const question = questionInput.value;
+                if (!question.trim()) {
+                    answerDiv.innerHTML = "Please enter a question.";
+                    answerDiv.classList.remove('hidden');
+                    return;
+                }
+
+                answerDiv.innerHTML = '<div class="loader mx-auto"></div>';
+                answerDiv.classList.remove('hidden');
+
+                const reportContext = "You are an expert AI architect. You are answering questions about a report comparing a custom AI stack (GraphRAG for knowledge, Mem0 for memory) with a managed service (Google Vertex AI Memory Bank). The report concludes that the custom stack is better for control and transparency, while the managed service is simpler. The recommendation is to enhance the custom stack with features like an automated 'memory curator' and a 'living knowledge graph' that learns from conversations.";
+                const prompt = `${reportContext} Based on this, answer the following user question concisely: "${question}"`;
+
+                const answer = await callGemini(prompt);
+                answerDiv.innerHTML = answer.replace(/\n/g, '<br>');
+            });
+
+
+            // Chart.js implementation
+            const ctx = document.getElementById('comparison-chart').getContext('2d');
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['System Control', 'Operational Simplicity', 'Transparency', 'Retrieval Sophistication', 'Automated Curation'],
+                    datasets: [{
+                        label: 'GraphRAG + Mem0',
+                        data: [9, 3, 9, 8, 2],
+                        backgroundColor: 'rgba(94, 106, 125, 0.7)',
+                        borderColor: '#5A6A7D',
+                        borderWidth: 2
+                    }, {
+                        label: 'Vertex AI Memory Bank',
+                        data: [4, 9, 2, 6, 9],
+                        backgroundColor: 'rgba(58, 125, 124, 0.7)',
+                        borderColor: '#3A7D7C',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            max: 10,
+                            title: { display: true, text: 'Relative Score (1-10)', color: '#475569' },
+                            grid: { color: '#e2e8f0' },
+                            ticks: { color: '#475569' }
+                        },
+                        y: {
+                           grid: { display: false },
+                           ticks: { color: '#475569' }
+                        }
+                    },
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Architectural Trade-offs: Custom Stack vs. Managed Service',
+                            font: { size: 16 },
+                            color: '#1e293b',
+                            padding: { bottom: 20 }
+                        },
+                        tooltip: {
+                             backgroundColor: '#1e293b',
+                             titleColor: '#f8fafc',
+                             bodyColor: '#f8fafc',
+                             padding: 10,
+                             cornerRadius: 4,
+                             boxPadding: 4,
+                             callbacks: {
+                                title: function(tooltipItems) {
+                                    const item = tooltipItems[0];
+                                    let label = item.chart.data.labels[item.dataIndex];
+                                    if (Array.isArray(label)) {
+                                      return label.join(' ');
+                                    }
+                                    return label;
+                                }
+                            }
+                        },
+                         legend: {
+                            position: 'bottom',
+                            labels: {
+                                color: '#334155'
+                            }
+                        }
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+</html>
